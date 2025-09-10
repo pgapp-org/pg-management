@@ -3,27 +3,28 @@ package com.pgapp.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "pgs")
+@Table(name = "floors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PG {
+public class Floor {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private String address;
+    // user-visible floor number (1, 2, 3 or "G", etc.)
+    private Integer floorNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "pg_id")
     @JsonIgnore
-    private Owner owner;
+    private PG pg;
 
-    @OneToMany(mappedBy = "pg", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Floor> floors = new ArrayList<>();
+    @OneToMany(mappedBy = "floor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Room> rooms = new ArrayList<>();
 }

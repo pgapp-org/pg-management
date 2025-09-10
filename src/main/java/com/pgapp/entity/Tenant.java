@@ -21,10 +21,14 @@ public class Tenant {
     private String phone;
     private LocalDate joinDate;
     private LocalDate endDate;
-    private String roomNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pg_id")
     @JsonIgnore
     private PG pg;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    @JsonIgnore
+    private Room room;
 }

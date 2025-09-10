@@ -28,6 +28,33 @@ public class OwnerController {
         return ResponseEntity.ok(savedOwner);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Owner> getOwnerById(@PathVariable Long id) {
+        return ownerService.getOwnerById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Owner>> getAllOwners() {
+        return ResponseEntity.ok(ownerService.getAllOwners());
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Owner> updateOwner(@PathVariable Long id, @RequestBody Owner updatedOwner) {
+        return ownerService.updateOwner(id, updatedOwner)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOwner(@PathVariable Long id) {
+        return ownerService.deleteOwner(id)
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.notFound().build();
+    }
 
 
     @GetMapping("/{ownerId}/pgs")
