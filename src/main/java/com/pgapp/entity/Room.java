@@ -28,4 +28,9 @@ public class Room {
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Tenant> tenants = new ArrayList<>();
+
+    public int getVacantBeds() {
+        return capacity - occupiedBeds;
+    }
+
 }
