@@ -21,6 +21,8 @@ public class Room {
     private Integer capacity;     // beds in this room, e.g. 3
     private Integer occupiedBeds = 0; // current count, default 0
 
+    private Double price;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "floor_id")
     @JsonIgnore
@@ -31,6 +33,17 @@ public class Room {
 
     public int getVacantBeds() {
         return capacity - occupiedBeds;
+    }
+
+    @Transient
+    public String getRoomType() {
+        return switch (capacity) {
+            case 1 -> "Single Sharing";
+            case 2 -> "Double Sharing";
+            case 3 -> "Triple Sharing";
+            case 4 -> "Four Sharing";
+            default -> capacity + "-Sharing";
+        };
     }
 
 }

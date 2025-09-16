@@ -17,7 +17,12 @@ public class PG {
     private Long id;
 
     private String name;
-    private String address;
+    private String houseNo;   // House/Flat/Block No.
+    private String area;      // Area name
+    private String city;
+    private String state;
+    private String pincode;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
@@ -26,4 +31,20 @@ public class PG {
 
     @OneToMany(mappedBy = "pg", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Floor> floors = new ArrayList<>();
+
+
+    // ✅ Store only file paths
+    @ElementCollection
+    @CollectionTable(name = "pg_images", joinColumns = @JoinColumn(name = "pg_id"))
+    @Column(name = "image_url")
+    private List<String> images = new ArrayList<>();
+
+
+    // ✅ Amenities
+    @ElementCollection(targetClass = AmenityType.class)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "pg_amenities", joinColumns = @JoinColumn(name = "pg_id"))
+    @Column(name = "amenity")
+    private List<AmenityType> amenities = new ArrayList<>();
+
 }
