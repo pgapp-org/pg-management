@@ -1,7 +1,7 @@
 package com.pgapp.controller;
 
-import com.pgapp.dto.ApplyRequestDTO;
-import com.pgapp.dto.TenantApplicationDTO;
+import com.pgapp.request.tenant.TenantApplicationRequest;
+import com.pgapp.response.tenant.TenantApplicationResponse;
 import com.pgapp.entity.ApplicationStatus;
 import com.pgapp.service.TenantApplicationService;
 import lombok.RequiredArgsConstructor;
@@ -17,40 +17,36 @@ public class TenantApplicationController {
 
     private final TenantApplicationService applicationService;
 
-//    @PostMapping("/apply")
-//    public ResponseEntity<TenantApplicationDTO> applyForRoom(
-//            @RequestParam Long tenantId,
-//            @RequestParam Long pgId,
-//            @RequestParam Long roomId) {
-//        TenantApplicationDTO dto = applicationService.applyForRoom(tenantId, pgId, roomId);
-//        return ResponseEntity.ok(dto);
-//    }
-
+    // ✅ Apply for a PG room
     @PostMapping("/apply")
-    public ResponseEntity<TenantApplicationDTO> applyForRoom(@RequestBody ApplyRequestDTO request) {
-        TenantApplicationDTO dto = applicationService.applyForRoomByDetails(
-                request.getTenantId(),
-                request.getPgName(),
-                request.getFloorNumber(),
-                request.getRoomNumber()
-        );
-        return ResponseEntity.ok(dto);
+    public ResponseEntity<TenantApplicationResponse> applyForRoom(
+            @RequestBody TenantApplicationRequest request) {
+        TenantApplicationResponse response = applicationService.applyForRoom(request);
+        return ResponseEntity.ok(response);
     }
 
-
+    // ✅ Get all applications for a PG
     @GetMapping("/pg/{pgId}")
-    public ResponseEntity<List<TenantApplicationDTO>> getApplicationsForPG(@PathVariable Long pgId) {
-        return ResponseEntity.ok(applicationService.getApplicationsForPG(pgId));
+    public ResponseEntity<List<TenantApplicationResponse>> getApplicationsForPG(
+            @PathVariable Long pgId) {
+        List<TenantApplicationResponse> responses = applicationService.getApplicationsForPG(pgId);
+        return ResponseEntity.ok(responses);
     }
 
+    // ✅ Get all applications for a Tenant
     @GetMapping("/tenant/{tenantId}")
-    public ResponseEntity<List<TenantApplicationDTO>> getApplicationsForTenant(@PathVariable Long tenantId) {
-        return ResponseEntity.ok(applicationService.getApplicationsForTenant(tenantId));
+    public ResponseEntity<List<TenantApplicationResponse>> getApplicationsForTenant(
+            @PathVariable Long tenantId) {
+        List<TenantApplicationResponse> responses = applicationService.getApplicationsForTenant(tenantId);
+        return ResponseEntity.ok(responses);
     }
 
+    // ✅ Update application status (APPROVED / REJECTED / PENDING)
     @PutMapping("/{applicationId}/status")
-    public ResponseEntity<TenantApplicationDTO> updateApplicationStatus(@PathVariable Long applicationId,
-                                                                        @RequestParam ApplicationStatus status) {
-        return ResponseEntity.ok(applicationService.updateApplicationStatus(applicationId, status));
+    public ResponseEntity<TenantApplicationResponse> updateApplicationStatus(
+            @PathVariable Long applicationId,
+            @RequestParam ApplicationStatus status) {
+        TenantApplicationResponse response = applicationService.updateApplicationStatus(applicationId, status);
+        return ResponseEntity.ok(response);
     }
 }

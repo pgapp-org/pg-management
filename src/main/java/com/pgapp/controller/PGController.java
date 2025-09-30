@@ -1,85 +1,53 @@
 package com.pgapp.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pgapp.converter.PGConverter;
+import com.pgapp.entity.Bed;
+import com.pgapp.entity.Floor;
 import com.pgapp.entity.PG;
+import com.pgapp.entity.Room;
+import com.pgapp.exception.ResourceNotFoundException;
 import com.pgapp.repository.PGRepository;
+import com.pgapp.request.owner.PGRequest;
+import com.pgapp.response.PGResponse;
 import com.pgapp.service.PGService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pgs")
 @CrossOrigin(origins = "http://localhost:4200")
 public class PGController {
 
-    @Autowired
-    private PGRepository pgRepository;
-
+    private final PGRepository pgRepository;
     private final PGService pgService;
 
-    public PGController(PGService pgService) {
+    public PGController(PGService pgService, PGRepository pgRepository) {
         this.pgService = pgService;
+        this.pgRepository = pgRepository;
     }
 
-    // ✅ Create PG with Floors + Rooms
-//    @PostMapping("/{ownerId}/create")
-//    public ResponseEntity<?> createPG(@PathVariable Long ownerId, @RequestBody PG pg) {
-//        try {
-//            PG saved = pgService.createPG(ownerId, pg);
-//            return ResponseEntity.ok(saved);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.badRequest().body(e.getMessage());
-//        }
-//    }
-
-    @PostMapping(
-            value = "/{ownerId}/create",
-            consumes = "multipart/form-data"
-    )
-    public ResponseEntity<?> createPG(
-            @PathVariable Long ownerId,
-            @RequestPart("pg") String pgJson,   // get raw JSON string
-            @RequestPart(value = "images", required = false) List<MultipartFile> images
-    ) {
-        try {
-            // Convert JSON string to PG object
-            ObjectMapper objectMapper = new ObjectMapper();
-            PG pg = objectMapper.readValue(pgJson, PG.class);
-
-            PG saved = pgService.createPG(ownerId, pg, images);
-            return ResponseEntity.ok(saved);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    // ✅ Create PG (basic info only)
+    @PostMapping("/{ownerId}/create")
+    public ResponseEntity<PGResponse> createPG(@PathVariable Long ownerId, @RequestBody PGRequest pgRequest) {
+        PG saved = pgService.createPG(ownerId, PGConverter.toEntity(pgRequest));
+        return ResponseEntity.ok(PGConverter.toResponse(saved));
     }
 
-
-
-    // ✅ Get PG by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<PG> getPGById(@PathVariable Long id) {
-        return pgService.getPGById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // ✅ Get All PGs
-    @GetMapping
-    public ResponseEntity<List<PG>> getAllPGs() {
-        return ResponseEntity.ok(pgService.getAllPGs());
-    }
-
-    // ✅ Update PG basic info
+    // ✅ Update PG
     @PutMapping("/{id}")
-    public ResponseEntity<PG> updatePG(@PathVariable Long id, @RequestBody PG updatedPG) {
-        return pgService.updatePG(id, updatedPG)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<PGResponse> updatePG(@PathVariable Long id, @RequestBody PGRequest updatedRequest) {
+        return pgService.updatePG(id, PGConverter.toEntity(updatedRequest))
+                .map(pg -> ResponseEntity.ok(PGConverter.toResponse(pg)))
+                .orElseThrow(() -> new ResourceNotFoundException("PG not found with id " + id));
     }
 
     // ✅ Delete PG
@@ -90,13 +58,81 @@ public class PGController {
                 : ResponseEntity.notFound().build();
     }
 
+    // ✅ Get PG by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<PGResponse> getPGById(@PathVariable Long id) {
+        return pgService.getPGById(id)
+                .map(pg -> ResponseEntity.ok(PGConverter.toResponse(pg)))
+                .orElseThrow(() -> new ResourceNotFoundException("PG not found with id " + id));
+    }
+
+
+    // ✅ Get All PGs
+    @GetMapping
+    public ResponseEntity<List<PGResponse>> getAllPGs() {
+        return ResponseEntity.ok(pgService.getAllPGs().stream()
+                .map(PGConverter::toResponse)
+                .collect(Collectors.toList()));
+    }
+
+    // ------------------- IMAGE ENDPOINTS ------------------- //
+
+
+    @PostMapping(value = "/{pgId}/images", consumes = "multipart/form-data")
+    public ResponseEntity<PGResponse> uploadImages(@PathVariable Long pgId,
+                                                   @RequestParam("images") MultipartFile[] images) {
+        PG pg = pgService.addImages(pgId, Arrays.asList(images));
+        return ResponseEntity.ok(PGConverter.toResponse(pg));
+    }
+
+
+    @DeleteMapping("/{pgId}/images")
+    public ResponseEntity<PGResponse> removeImage(@PathVariable Long pgId, @RequestParam String imageUrl) {
+        PG pg = pgService.removeImage(pgId, imageUrl);
+        return ResponseEntity.ok(PGConverter.toResponse(pg));
+    }
+
+    // ------------------- FILTER ENDPOINTS ------------------- //
+
+
     @GetMapping("/city/{city}")
-    public List<PG> getByCity(@PathVariable String city) {
-        return pgRepository.findByCityIgnoreCase(city);
+    public List<PGResponse> getByCity(@PathVariable String city) {
+        return pgRepository.findByCityIgnoreCase(city).stream()
+                .map(PGConverter::toResponse)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/city/{city}/area/{area}")
-    public List<PG> getByCityAndArea(@PathVariable String city, @PathVariable String area) {
-        return pgRepository.findByCityAndAreaIgnoreCase(city, area);
+    public List<PGResponse> getByCityAndArea(@PathVariable String city, @PathVariable String area) {
+        return pgRepository.findByCityAndAreaIgnoreCase(city, area).stream()
+                .map(PGConverter::toResponse)
+                .collect(Collectors.toList());
     }
+
+    @GetMapping("/{pgId}/occupancy")
+    public Map<String, Integer> getPgOccupancy(@PathVariable Long pgId) {
+        PG pg = pgRepository.findById(pgId)
+                .orElseThrow(() -> new RuntimeException("PG not found with id " + pgId));
+
+        // Traverse floors → rooms → beds
+        int totalBeds = 0;
+        int occupiedBeds = 0;
+
+        for (Floor floor : pg.getFloors()) {
+            for (Room room : floor.getRooms()) {
+                totalBeds += room.getCapacity();
+                occupiedBeds += (int) room.getBeds().stream().filter(Bed::isOccupied).count();
+            }
+        }
+
+        int vacantBeds = totalBeds - occupiedBeds;
+
+        Map<String, Integer> response = new HashMap<>();
+        response.put("occupiedBeds", occupiedBeds);
+        response.put("vacantBeds", vacantBeds);
+
+        return response;
+    }
+
 }
+

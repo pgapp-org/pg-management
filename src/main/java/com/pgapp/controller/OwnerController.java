@@ -1,18 +1,21 @@
 package com.pgapp.controller;
 
+import com.pgapp.converter.owner.OwnerConverter;
 import com.pgapp.entity.Owner;
 import com.pgapp.entity.PG;
-import com.pgapp.repository.OwnerRepository;
-import com.pgapp.repository.PGRepository;
+import com.pgapp.request.owner.OwnerLoginRequest;
+import com.pgapp.request.owner.OwnerRegisterRequest;
+import com.pgapp.response.owner.OwnerLoginResponse;
+import com.pgapp.response.owner.OwnerRegisterResponse;
 import com.pgapp.service.OwnerService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/owners")
+@CrossOrigin(origins = "http://localhost:4200")
 public class OwnerController {
 
 
@@ -23,16 +26,28 @@ public class OwnerController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Owner> register(@RequestBody Owner owner) {
+    public ResponseEntity<OwnerRegisterResponse> register(@Valid @RequestBody OwnerRegisterRequest request) {
+        Owner owner = OwnerConverter.toEntity(request);
         Owner savedOwner = ownerService.registerOwner(owner);
-        return ResponseEntity.ok(savedOwner);
+        return ResponseEntity.ok(OwnerConverter.toRegisterResponse(savedOwner));
     }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<OwnerLoginResponse> login(@Valid @RequestBody OwnerLoginRequest request) {
+        Owner owner = ownerService.loginOwner(request.getEmail(), request.getPassword());
+        return ResponseEntity.ok(new OwnerLoginResponse(true, "Login successful", owner));
+    }
+
+
+
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Owner> getOwnerById(@PathVariable Long id) {
-        return ownerService.getOwnerById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Owner owner = ownerService.getOwnerById(id); // throws if not found
+        return ResponseEntity.ok(owner);
     }
 
     @GetMapping
@@ -43,23 +58,19 @@ public class OwnerController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Owner> updateOwner(@PathVariable Long id, @RequestBody Owner updatedOwner) {
-        return ownerService.updateOwner(id, updatedOwner)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Owner owner = ownerService.updateOwner(id, updatedOwner); // throws if not found
+        return ResponseEntity.ok(owner);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOwner(@PathVariable Long id) {
-        return ownerService.deleteOwner(id)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+        ownerService.deleteOwner(id); // throws if not found
+        return ResponseEntity.noContent().build();
     }
-
 
     @GetMapping("/{ownerId}/pgs")
     public ResponseEntity<?> getPgs(@PathVariable Long ownerId) {
-        List<PG> pgs = ownerService.getOwner(ownerId);
+        List<PG> pgs = ownerService.getPgsByOwnerId(ownerId); // ✅ use existing method
         return ResponseEntity.ok(pgs);
     }
 }

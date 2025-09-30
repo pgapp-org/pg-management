@@ -1,12 +1,15 @@
 package com.pgapp.service;
 
-import com.pgapp.dto.TenantApplicationDTO;
+import com.pgapp.converter.tenant.TenantApplicationConverter;
 import com.pgapp.entity.*;
 import com.pgapp.repository.*;
+import com.pgapp.request.tenant.TenantApplicationRequest;
+import com.pgapp.response.tenant.TenantApplicationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,115 +21,99 @@ public class TenantApplicationService {
     private final TenantRepository tenantRepository;
     private final PGRepository pgRepository;
     private final RoomRepository roomRepository;
-    private final TenantRepository tenantRepo; // alias if needed
     private final FloorRepository floorRepository;
-    // (tenantRepository and tenantRepo may be the same; keep one consistent)
+    private final DailyBookingGuestRepository dailyBookingGuestRepository;
 
-//    @Transactional
-//    public TenantApplicationDTO applyForRoom(Long tenantId, Long pgId, Long roomId) {
-//        Tenant tenant = tenantRepository.findById(tenantId)
-//                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-//        PG pg = pgRepository.findById(pgId)
-//                .orElseThrow(() -> new RuntimeException("PG not found"));
-//        Room room = roomRepository.findById(roomId)
-//                .orElseThrow(() -> new RuntimeException("Room not found"));
-//
-//        TenantApplication application = TenantApplication.builder()
-//                .tenant(tenant)
-//                .pg(pg)
-//                .room(room)
-//                .status(ApplicationStatus.PENDING)
-//                .build();
-//
-//        TenantApplication saved = applicationRepository.save(application);
-//        return toDto(saved);
-//    }
 
+    // ✅ Apply for a PG room
     @Transactional
-    public TenantApplicationDTO applyForRoomByDetails(Long tenantId, String pgName, Integer floorNumber, String roomNumber) {
-        Tenant tenant = tenantRepository.findById(tenantId)
+    public TenantApplicationResponse applyForRoom(TenantApplicationRequest request) {
+        Tenant tenant = tenantRepository.findById(request.getTenantId())
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
 
-        PG pg = pgRepository.findByName(pgName)
+        PG pg = pgRepository.findByName(request.getPgName())
                 .orElseThrow(() -> new RuntimeException("PG not found"));
 
-        Floor floor = floorRepository.findByPgIdAndFloorNumber(pg.getId(), floorNumber)
+        Floor floor = floorRepository.findByPgIdAndFloorNumber(pg.getId(), request.getFloorNumber())
                 .orElseThrow(() -> new RuntimeException("Floor not found"));
 
-        Room room = roomRepository.findByFloorIdAndRoomNumber(floor.getId(), roomNumber)
+        Room room = roomRepository.findByFloorIdAndRoomNumber(floor.getId(), request.getRoomNumber())
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
-        TenantApplication application = TenantApplication.builder()
-                .tenant(tenant)
-                .pg(pg)
-                .room(room)
-                .status(ApplicationStatus.PENDING)
-                .build();
+        TenantApplication application = TenantApplicationConverter.fromRequest(request, tenant, pg, room);
+        TenantApplication saved = applicationRepository.save(application);
 
-        return toDto(applicationRepository.save(application));
+        return TenantApplicationConverter.toResponse(saved);
     }
 
-
+    // ✅ Get all applications for a PG
     @Transactional(readOnly = true)
-    public List<TenantApplicationDTO> getApplicationsForPG(Long pgId) {
+    public List<TenantApplicationResponse> getApplicationsForPG(Long pgId) {
         return applicationRepository.findByPgId(pgId).stream()
-                .map(this::toDto)
+                .map(TenantApplicationConverter::toResponse)
                 .collect(Collectors.toList());
     }
 
+    // ✅ Get all applications for a Tenant
     @Transactional(readOnly = true)
-    public List<TenantApplicationDTO> getApplicationsForTenant(Long tenantId) {
+    public List<TenantApplicationResponse> getApplicationsForTenant(Long tenantId) {
         return applicationRepository.findByTenantId(tenantId).stream()
-                .map(this::toDto)
+                .map(TenantApplicationConverter::toResponse)
                 .collect(Collectors.toList());
     }
 
+    // ✅ Update application status (APPROVED / REJECTED / PENDING)
     @Transactional
-    public TenantApplicationDTO updateApplicationStatus(Long applicationId, ApplicationStatus status) {
+    public TenantApplicationResponse updateApplicationStatus(Long applicationId, ApplicationStatus status) {
         TenantApplication application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        application.setStatus(status);
+        Room room = application.getRoom();
+        Tenant tenant = application.getTenant();
 
+        // Assign bed if approved
         if (status == ApplicationStatus.APPROVED) {
-            Room room = application.getRoom();
-            if (room.getCapacity() - room.getOccupiedBeds() <= 0) {
-                throw new RuntimeException("No vacant beds in this room");
+            int bedNum = Integer.parseInt(application.getBedNumber());
+            Bed bed = room.getBeds().stream()
+                    .filter(b -> b.getBedNumber() == bedNum)
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Bed not found in this room"));
+
+            // Check for short-term conflict
+            // Check for short-term conflicts
+            // Check for short-term conflicts
+            List<DailyBookingGuest> shortTermGuests = dailyBookingGuestRepository.findByBedId(bed.getId());
+            for (DailyBookingGuest guest : shortTermGuests) {
+                DailyBookings booking = guest.getBooking();  // now available
+                if (booking != null && booking.getCheckOutDate() != null &&
+                        !booking.getCheckOutDate().isBefore(LocalDate.now())) {
+                    throw new RuntimeException(
+                            "Bed is reserved for short-term until " + booking.getCheckOutDate()
+                    );
+                }
             }
-            // Assign tenant to PG and Room
-            Tenant tenant = application.getTenant();
+
+
+
+
+            if (bed.isOccupied()) {
+                throw new RuntimeException("This bed is already occupied");
+            }
+
+            // Assign tenant
             tenant.setPg(application.getPg());
             tenant.setRoom(room);
+            tenant.setBedNumber(application.getBedNumber());
+            bed.setOccupied(true);
+            bed.setTenant(tenant);
 
             room.setOccupiedBeds(room.getOccupiedBeds() + 1);
             roomRepository.save(room);
             tenantRepository.save(tenant);
         }
 
+        application.setStatus(status);
         TenantApplication saved = applicationRepository.save(application);
-        return toDto(saved);
-    }
-
-    // mapping helper (must access lazy fields inside @Transactional)
-    private TenantApplicationDTO toDto(TenantApplication app) {
-        Room room = app.getRoom();
-        return TenantApplicationDTO.builder()
-                .id(app.getId())
-                .status(app.getStatus() == null ? null : app.getStatus().name())
-
-                .tenantId(app.getTenant() != null ? app.getTenant().getId() : null)
-                .tenantName(app.getTenant() != null ? app.getTenant().getName() : null)
-
-                .pgId(app.getPg() != null ? app.getPg().getId() : null)
-                .pgName(app.getPg() != null ? app.getPg().getName() : null)
-
-                .roomId(room != null ? room.getId() : null)
-                .roomNumber(room != null ? room.getRoomNumber() : null)
-                .roomCapacity(room != null ? room.getCapacity() : null)
-                .roomOccupiedBeds(room != null ? room.getOccupiedBeds() : null)
-                .roomVacantBeds(room != null && room.getCapacity() != null && room.getOccupiedBeds() != null
-                        ? room.getCapacity() - room.getOccupiedBeds()
-                        : null)
-                .build();
+        return TenantApplicationConverter.toResponse(saved);
     }
 }

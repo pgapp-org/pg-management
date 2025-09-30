@@ -25,6 +25,7 @@ public class Floor {
     @JsonIgnore
     private PG pg;
 
+
     @OneToMany(mappedBy = "floor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Room> rooms = new ArrayList<>();
 }

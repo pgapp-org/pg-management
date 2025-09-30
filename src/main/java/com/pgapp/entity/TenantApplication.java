@@ -27,6 +27,8 @@ public class TenantApplication {
     @JoinColumn(name = "room_id")
     private Room room;
 
+    private String bedNumber;
+
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status; // PENDING, APPROVED, REJECTED
 }

@@ -1,6 +1,8 @@
 package com.pgapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tenant {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,6 +25,8 @@ public class Tenant {
     private LocalDate joinDate;
     private LocalDate endDate;
 
+    private String bedNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pg_id")
     @JsonIgnore
@@ -31,4 +36,10 @@ public class Tenant {
     @JoinColumn(name = "room_id")
     @JsonIgnore
     private Room room;
+
+    @OneToOne(mappedBy = "tenant")
+    @JsonBackReference
+    private Bed bed;
+
+
 }

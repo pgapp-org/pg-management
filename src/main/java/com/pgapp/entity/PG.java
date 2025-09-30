@@ -23,11 +23,16 @@ public class PG {
     private String state;
     private String pincode;
 
+    @Column(name = "short_term_allowed")
+    private boolean shortTermAllowed = false;
+
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     @JsonIgnore
     private Owner owner;
+
 
     @OneToMany(mappedBy = "pg", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Floor> floors = new ArrayList<>();

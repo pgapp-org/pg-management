@@ -1,4 +1,4 @@
-package com.pgapp.dto;
+package com.pgapp.response.tenant;
 
 import lombok.*;
 
@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TenantApplicationDTO {
+public class TenantApplicationResponse {
     private Long id;
     private String status;
 
@@ -21,4 +21,6 @@ public class TenantApplicationDTO {
     private Integer roomCapacity;
     private Integer roomOccupiedBeds;
     private Integer roomVacantBeds;
+
+    private String bedNumber;
 }

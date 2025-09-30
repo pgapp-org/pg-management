@@ -1,6 +1,9 @@
 package com.pgapp.controller;
 
+import com.pgapp.converter.tenant.TenantConverter;
 import com.pgapp.entity.Tenant;
+import com.pgapp.request.tenant.TenantRequest;
+import com.pgapp.response.tenant.TenantResponse;
 import com.pgapp.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +20,13 @@ public class TenantController {
 
     // ✅ Register a tenant
     @PostMapping("/register")
-    public ResponseEntity<Tenant> registerTenant(@RequestBody Tenant tenant) {
-        return ResponseEntity.ok(tenantService.registerTenant(tenant));
+    public ResponseEntity<TenantResponse> registerTenant(@RequestBody TenantRequest request) {
+        Tenant tenant = TenantConverter.toEntity(request);   // convert request → entity
+        Tenant savedTenant = tenantService.registerTenant(tenant);  // save entity
+        return ResponseEntity.ok(TenantConverter.toResponse(savedTenant)); // convert entity → response
     }
+
+
 
     // ✅ Get tenant by ID
     @GetMapping("/{id}")
@@ -36,12 +43,21 @@ public class TenantController {
     }
 
     // ✅ Update tenant
+//    @PutMapping("/{id}")
+//    public ResponseEntity<Tenant> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
+//        return tenantService.updateTenant(id, tenant)
+//                .map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
     @PutMapping("/{id}")
-    public ResponseEntity<Tenant> updateTenant(@PathVariable Long id, @RequestBody Tenant tenant) {
-        return tenantService.updateTenant(id, tenant)
+    public ResponseEntity<TenantResponse> updateTenant(@PathVariable Long id, @RequestBody TenantRequest request) {
+        Tenant updatedTenant = TenantConverter.toEntity(request);  // convert request → entity
+        return tenantService.updateTenant(id, updatedTenant)
+                .map(TenantConverter::toResponse) // convert entity → response
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     // ✅ Delete tenant
     @DeleteMapping("/{id}")
