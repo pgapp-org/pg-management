@@ -1,6 +1,6 @@
 package com.pgapp.request.owner;
 
-import com.pgapp.entity.AmenityType;
+import com.pgapp.enums.AmenityType;
 import lombok.Data;
 
 import java.util.List;
@@ -13,6 +13,10 @@ public class PGRequest {
     private String city;
     private String state;
     private String pincode;
+
+    private String foodPolicy; // COMPULSORY, OPTIONAL, NOT_PROVIDED
+    private Double pricePerDayWithFood;
+    private Double pricePerDayWithoutFood;
     private boolean shortTermAllowed;
     private List<AmenityType> amenities;
 }

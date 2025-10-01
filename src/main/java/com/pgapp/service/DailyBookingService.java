@@ -2,6 +2,8 @@ package com.pgapp.service;
 
 import com.pgapp.converter.DailyBookingConverter;
 import com.pgapp.entity.*;
+import com.pgapp.enums.ApplicationStatus;
+import com.pgapp.enums.FoodPolicy;
 import com.pgapp.repository.*;
 import com.pgapp.request.tenant.DailyApproveRequestDTO;
 import com.pgapp.request.tenant.DailyBookingRequestDTO;
@@ -52,6 +54,20 @@ public class DailyBookingService {
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
         PG pg = pgRepo.findById(request.getPgId())
                 .orElseThrow(() -> new RuntimeException("PG not found"));
+
+        if (pg.getFoodPolicy() == FoodPolicy.COMPULSORY) {
+            booking.setFoodIncluded(true);
+            booking.setDailyRate(pg.getPricePerDayWithFood());
+        } else if (pg.getFoodPolicy() == FoodPolicy.OPTIONAL) {
+            booking.setFoodIncluded(request.getFoodIncluded());
+            booking.setDailyRate(request.getFoodIncluded()
+                    ? pg.getPricePerDayWithFood()
+                    : pg.getPricePerDayWithoutFood());
+        } else { // NOT_PROVIDED
+            booking.setFoodIncluded(false);
+            booking.setDailyRate(pg.getPricePerDayWithoutFood());
+        }
+
 
         booking.setTenant(tenant);
         booking.setPg(pg);

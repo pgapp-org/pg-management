@@ -1,5 +1,6 @@
 package com.pgapp.entity;
 
+import com.pgapp.enums.ComplaintCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;

@@ -20,6 +20,9 @@ public class DailyBookingConverter {
         dto.setPgId(booking.getPg() != null ? booking.getPg().getId() : null);
         dto.setRoomId(booking.getRoom() != null ? booking.getRoom().getId() : null);
 
+        dto.setFoodIncluded(booking.getFoodIncluded());  // ADD THIS
+        dto.setDailyRate(booking.getDailyRate());        // optional if needed
+
         if (booking.getGuests() != null) {
             List<DailyGuestDTO> guestDTOs = booking.getGuests().stream().map(g -> {
                 DailyGuestDTO guestDTO = new DailyGuestDTO();

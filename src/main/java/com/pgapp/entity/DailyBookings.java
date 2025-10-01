@@ -2,6 +2,7 @@ package com.pgapp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.pgapp.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -62,6 +63,9 @@ public class DailyBookings {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
 
+    // DailyBookings.java
+    private Boolean foodIncluded;
+    private Double dailyRate;
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status; // PENDING, APPROVED, REJECTED

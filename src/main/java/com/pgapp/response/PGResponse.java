@@ -1,6 +1,6 @@
 package com.pgapp.response;
 
-import com.pgapp.entity.AmenityType;
+import com.pgapp.enums.AmenityType;
 import lombok.Data;
 
 import java.util.List;
@@ -14,6 +14,9 @@ public class PGResponse {
     private String city;
     private String state;
     private String pincode;
+    private String foodPolicy;
+    private Double pricePerDayWithFood;
+    private Double pricePerDayWithoutFood;
     private boolean shortTermAllowed;
     private List<AmenityType> amenities;
     private List<String> images;

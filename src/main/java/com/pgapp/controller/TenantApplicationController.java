@@ -2,7 +2,7 @@ package com.pgapp.controller;
 
 import com.pgapp.request.tenant.TenantApplicationRequest;
 import com.pgapp.response.tenant.TenantApplicationResponse;
-import com.pgapp.entity.ApplicationStatus;
+import com.pgapp.enums.ApplicationStatus;
 import com.pgapp.service.TenantApplicationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

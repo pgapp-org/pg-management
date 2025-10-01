@@ -1,5 +1,6 @@
 package com.pgapp.entity;
 
+import com.pgapp.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,6 +29,10 @@ public class TenantApplication {
     private Room room;
 
     private String bedNumber;
+
+    // TenantApplication.java
+    private Boolean foodOpted;
+
 
     @Enumerated(EnumType.STRING)
     private ApplicationStatus status; // PENDING, APPROVED, REJECTED

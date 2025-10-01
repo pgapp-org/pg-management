@@ -12,5 +12,6 @@ public class DailyBookingRequestDTO {
     private Long pgId;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
+    private Boolean foodIncluded;
     private List<DailyGuestDTO> guests;
 }

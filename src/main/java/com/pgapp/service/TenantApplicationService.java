@@ -2,6 +2,7 @@ package com.pgapp.service;
 
 import com.pgapp.converter.tenant.TenantApplicationConverter;
 import com.pgapp.entity.*;
+import com.pgapp.enums.ApplicationStatus;
 import com.pgapp.repository.*;
 import com.pgapp.request.tenant.TenantApplicationRequest;
 import com.pgapp.response.tenant.TenantApplicationResponse;
@@ -30,6 +31,8 @@ public class TenantApplicationService {
     public TenantApplicationResponse applyForRoom(TenantApplicationRequest request) {
         Tenant tenant = tenantRepository.findById(request.getTenantId())
                 .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+        System.out.println("Searching PG with name: '" + request.getPgName() + "'");
 
         PG pg = pgRepository.findByName(request.getPgName())
                 .orElseThrow(() -> new RuntimeException("PG not found"));

@@ -24,6 +24,9 @@ public class Tenant {
     private String phone;
     private LocalDate joinDate;
     private LocalDate endDate;
+    // Tenant.java
+    private Boolean foodOpted; // null if not applicable
+
 
     private String bedNumber;
 

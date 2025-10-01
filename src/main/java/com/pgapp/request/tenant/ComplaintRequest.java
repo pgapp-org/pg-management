@@ -1,6 +1,6 @@
 package com.pgapp.request.tenant;
 
-import com.pgapp.entity.ComplaintCategory;
+import com.pgapp.enums.ComplaintCategory;
 import lombok.Data;
 
 @Data

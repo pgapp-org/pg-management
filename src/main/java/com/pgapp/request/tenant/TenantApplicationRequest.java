@@ -9,5 +9,6 @@ public class TenantApplicationRequest {
     private Integer floorNumber;
     private String roomNumber;
     private String bedNumber;
+    private Boolean foodOpted;
 }
 

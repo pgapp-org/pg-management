@@ -2,6 +2,7 @@ package com.pgapp.converter.tenant;
 
 // package: com.pgapp.converter
 
+import com.pgapp.enums.ApplicationStatus;
 import com.pgapp.request.tenant.TenantApplicationRequest;
 import com.pgapp.response.tenant.TenantApplicationResponse;
 import com.pgapp.entity.TenantApplication;
@@ -27,6 +28,7 @@ public class TenantApplicationConverter {
                         ? room.getCapacity() - room.getOccupiedBeds()
                         : null)
                 .bedNumber(app.getBedNumber())
+                .foodOpted(app.getFoodOpted())
                 .build();
     }
 
@@ -40,7 +42,8 @@ public class TenantApplicationConverter {
                 .pg(pg)
                 .room(room)
                 .bedNumber(request.getBedNumber())
-                .status(com.pgapp.entity.ApplicationStatus.PENDING)
+                .foodOpted(request.getFoodOpted())
+                .status(ApplicationStatus.PENDING)
                 .build();
     }
 }

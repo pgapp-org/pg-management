@@ -14,5 +14,7 @@ public class DailyBookingResponseDTO {
     private Long tenantId;
     private Long pgId;
     private Long roomId;
+    private Boolean foodIncluded;
+    private Double dailyRate;
     private List<DailyGuestDTO> guests;
 }

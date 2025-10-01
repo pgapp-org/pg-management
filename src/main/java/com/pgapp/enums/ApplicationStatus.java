@@ -1,4 +1,4 @@
-package com.pgapp.entity;
+package com.pgapp.enums;
 
 public enum ApplicationStatus {
     PENDING,

@@ -1,6 +1,8 @@
 package com.pgapp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.pgapp.enums.AmenityType;
+import com.pgapp.enums.FoodPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.ArrayList;
@@ -22,6 +24,12 @@ public class PG {
     private String city;
     private String state;
     private String pincode;
+
+    @Enumerated(EnumType.STRING)
+    private FoodPolicy foodPolicy = FoodPolicy.NOT_PROVIDED; // default
+
+    private Double pricePerDayWithFood;
+    private Double pricePerDayWithoutFood;
 
     @Column(name = "short_term_allowed")
     private boolean shortTermAllowed = false;

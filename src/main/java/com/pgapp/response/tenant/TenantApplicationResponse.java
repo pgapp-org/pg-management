@@ -23,4 +23,5 @@ public class TenantApplicationResponse {
     private Integer roomVacantBeds;
 
     private String bedNumber;
+    private Boolean foodOpted;
 }
