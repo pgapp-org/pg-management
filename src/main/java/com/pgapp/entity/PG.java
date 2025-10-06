@@ -28,6 +28,14 @@ public class PG {
     @Enumerated(EnumType.STRING)
     private FoodPolicy foodPolicy = FoodPolicy.NOT_PROVIDED; // default
 
+//    private Double baseRent;             // rent of room (without food)
+//    private String foodPolicy;           // COMPULSORY, OPTIONAL, NONE
+    private Double foodFee;              // only applicable if OPTIONAL
+    private Double advanceAmount;        // deposit/security, used if variableAdvance = false
+    private boolean variableAdvance = false;  // false = same for all rooms, true = room-specific
+
+    private Integer noticePeriodMonths;  // notice period in months
+
     private Double pricePerDayWithFood;
     private Double pricePerDayWithoutFood;
 
@@ -59,5 +67,8 @@ public class PG {
     @CollectionTable(name = "pg_amenities", joinColumns = @JoinColumn(name = "pg_id"))
     @Column(name = "amenity")
     private List<AmenityType> amenities = new ArrayList<>();
+
+
+
 
 }

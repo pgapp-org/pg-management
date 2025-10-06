@@ -3,6 +3,7 @@ package com.pgapp.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.pgapp.enums.FoodPolicy;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,7 +30,11 @@ public class Room {
     private Integer capacity;     // beds in this room, e.g. 3
     private Integer occupiedBeds = 0; // current count, default 0
 
-    private Double price;
+    @Enumerated(EnumType.STRING)
+    private FoodPolicy foodPolicy = FoodPolicy.NOT_PROVIDED;
+
+    private Double baseRent;       // rent for this room
+    private Double advanceAmount;  // room-specific advance, used if PG.variableAdvance == true
 
     private String doorPosition;
 

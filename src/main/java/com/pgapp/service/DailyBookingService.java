@@ -169,7 +169,7 @@ public class DailyBookingService {
         roomResp.setId(room.getId());
         roomResp.setRoomNumber(room.getRoomNumber());
         roomResp.setCapacity(room.getCapacity());
-        roomResp.setPrice(room.getPrice());
+        roomResp.setBaseRent(room.getBaseRent());
         roomResp.setDoorPosition(room.getDoorPosition());
         roomResp.setRoom360ViewUrl(room.getRoom360ViewUrl());
 

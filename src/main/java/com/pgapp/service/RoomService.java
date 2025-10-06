@@ -46,7 +46,13 @@ public Room addRoom(Long floorId, Room room) {
             .orElseThrow(() -> new ResourceNotFoundException("Floor not found with id " + floorId));
 
     room.setFloor(floor);
-
+    room.setFoodPolicy(floor.getPg().getFoodPolicy());
+    System.out.println(floor.getPg().getFoodPolicy());
+    System.out.println(room.getFoodPolicy());
+    // Set advanceAmount from PG if variableAdvance == false
+    if (!floor.getPg().isVariableAdvance()) {
+        room.setAdvanceAmount(floor.getPg().getAdvanceAmount());
+    }
     // Save first
     Room savedRoom = roomRepository.save(room);
 
@@ -93,7 +99,7 @@ public Room addRoom(Long floorId, Room room) {
         return roomRepository.findById(roomId).map(room -> {
             room.setRoomNumber(updatedRoom.getRoomNumber());
             room.setCapacity(updatedRoom.getCapacity());
-            room.setPrice(updatedRoom.getPrice());
+            room.setBaseRent(updatedRoom.getBaseRent());
             room.setRoom360ViewUrl(updatedRoom.getRoom360ViewUrl());
             room.setDoorPosition(updatedRoom.getDoorPosition());
 

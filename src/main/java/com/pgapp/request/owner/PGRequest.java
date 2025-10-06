@@ -15,6 +15,15 @@ public class PGRequest {
     private String pincode;
 
     private String foodPolicy; // COMPULSORY, OPTIONAL, NOT_PROVIDED
+    private Double foodFee;
+
+
+    private Double advanceAmount;        // used if variableAdvance == false
+    private boolean variableAdvance;     // true = room-specific advance
+
+
+    private Integer noticePeriodMonths;
+
     private Double pricePerDayWithFood;
     private Double pricePerDayWithoutFood;
     private boolean shortTermAllowed;

@@ -1,5 +1,6 @@
 package com.pgapp.response.tenant;
 
+import com.pgapp.enums.ApplicationStatus;
 import lombok.*;
 
 @Data
@@ -8,7 +9,7 @@ import lombok.*;
 @Builder
 public class TenantApplicationResponse {
     private Long id;
-    private String status;
+//    private String status;
 
     private Long tenantId;
     private String tenantName;
@@ -24,4 +25,7 @@ public class TenantApplicationResponse {
 
     private String bedNumber;
     private Boolean foodOpted;
+    private Double finalMonthlyRent;
+    private ApplicationStatus status;
+    private Double advanceAmount;
 }

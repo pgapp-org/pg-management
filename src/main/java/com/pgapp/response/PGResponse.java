@@ -15,6 +15,12 @@ public class PGResponse {
     private String state;
     private String pincode;
     private String foodPolicy;
+    private Double foodFee;
+    private Double advanceAmount;       // used if variableAdvance == false
+    private boolean variableAdvance;    // true = room-specific
+
+    private Integer noticePeriodMonths;
+
     private Double pricePerDayWithFood;
     private Double pricePerDayWithoutFood;
     private boolean shortTermAllowed;
