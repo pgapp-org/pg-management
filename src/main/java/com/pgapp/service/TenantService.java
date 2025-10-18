@@ -49,4 +49,10 @@ public class TenantService {
         }
         return false;
     }
+
+    public Optional<Tenant> login(String email, String password) {
+        return tenantRepository.findByEmail(email)
+                .filter(t -> t.getPassword().equals(password));
+    }
+
 }

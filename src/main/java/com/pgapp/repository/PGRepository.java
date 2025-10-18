@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface PGRepository extends JpaRepository<PG, Long> {
     List<PG> findByOwnerId(Long ownerId);
     Optional<PG> findByName(String name);
+    Optional<PG> findById(Long id);
     Optional<PG> findByNameIgnoreCase(String name);
 
     //    List<PG> findByNameContainingIgnoreCase(String name);

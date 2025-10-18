@@ -3,6 +3,8 @@ package com.pgapp.response.tenant;
 import com.pgapp.enums.ApplicationStatus;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,4 +30,16 @@ public class TenantApplicationResponse {
     private Double finalMonthlyRent;
     private ApplicationStatus status;
     private Double advanceAmount;
+
+    // new
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
+
+    // payment summary
+    private boolean tokenPaid;
+    private boolean advancePaid;
+    private boolean refundProcessed;
+    private Double tokenAmount;
+    private Double refundAmount;
+
 }

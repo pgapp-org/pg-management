@@ -8,5 +8,6 @@ import java.time.LocalDate;
 public class TenantRequest {
     private String name;
     private String email;
+    private String password;
     private String phone;
 }

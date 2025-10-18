@@ -12,6 +12,7 @@ public class TenantConverter {
         Tenant tenant = new Tenant();
         tenant.setName(request.getName());
         tenant.setEmail(request.getEmail());
+        tenant.setPassword(request.getPassword());
         tenant.setPhone(request.getPhone());
         return tenant;
     }

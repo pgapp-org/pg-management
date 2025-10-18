@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tenants")
@@ -24,6 +25,19 @@ public class TenantController {
         Tenant tenant = TenantConverter.toEntity(request);   // convert request → entity
         Tenant savedTenant = tenantService.registerTenant(tenant);  // save entity
         return ResponseEntity.ok(TenantConverter.toResponse(savedTenant)); // convert entity → response
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TenantResponse> login(@RequestBody Map<String, String> loginRequest) {
+        String email = loginRequest.get("email");
+        String password = loginRequest.get("password");
+        System.out.println(email+" "+password);
+
+
+        return tenantService.login(email, password)
+                .map(TenantConverter::toResponse)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(401).build());
     }
 
 

@@ -51,8 +51,14 @@ public class TenantApplication {
     private boolean refundProcessed = false;
 
     private Double tokenAmount;
+
     private Double refundAmount;
     private LocalDate tokenPaymentDate;
     private LocalDate advancePaymentDate;
     private LocalDate refundDate;
+
+    // TenantApplication.java
+    private boolean hasCheckedIn = false;
+    private boolean firstMonthRentPaid = false;
+
 }
