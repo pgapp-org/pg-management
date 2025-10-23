@@ -107,8 +107,6 @@
 //    }
 //}
 
-
-
 package com.pgapp.service;
 
 import com.pgapp.entity.Payment;
@@ -126,10 +124,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
+
 import java.time.LocalDate;
-
-
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -139,200 +139,366 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TenantApplicationRepository tenantApplicationRepository;
 
+    private final double TOKEN_AMOUNT = 1000.0;
+
+    // ✅ Make payment
+//    @Transactional
+//    public PaymentResponse makePayment(PaymentRequest request) {
+//        TenantApplication app = tenantApplicationRepository.findById(request.getTenantApplicationId())
+//                .orElseThrow(() -> new RuntimeException("Tenant application not found"));
+//
+//        PaymentType type = request.getType();
+//
+//
+//        Payment payment = Payment.builder()
+//                .tenantApplication(app)
+//                .tenant(app.getTenant())
+//                .type(type)
+//                .amount(request.getAmount())
+//                .status(PaymentStatus.SUCCESS)
+//                .timestamp(LocalDateTime.now())
+//                .transactionRef("TXN-" + UUID.randomUUID())
+//                .build();
+//
+//        Payment savedPayment = paymentRepository.save(payment);
+//
+//        switch (type) {
+//            case TOKEN -> {
+//                app.setTokenPaid(true);
+//                app.setTokenAmount(request.getAmount());
+//            }
+//            case ADVANCE -> app.setAdvancePaid(true);
+//            case FIRST_MONTH_RENT -> app.setFirstMonthRentPaid(true);
+//            case RENT -> {
+//                    Payment pending = paymentRepository
+//                            .findTopByTenantApplicationIdAndTypeAndStatusOrderByTimestampDesc(
+//                                    app.getId(), PaymentType.RENT, PaymentStatus.PENDING)
+//                            .orElseThrow(() -> new RuntimeException("No pending rent payment found"));
+//
+//                    pending.setStatus(PaymentStatus.SUCCESS);
+//                    pending.setTimestamp(LocalDateTime.now());
+//                    pending.setTransactionRef("TXN-" + UUID.randomUUID());
+//                    pending.setAmount(request.getAmount());
+//
+//                    paymentRepository.save(pending);
+//                    return PaymentConverter.toResponse(pending);
+//
+//
+//            }
+//
+//            case REFUND -> {
+//                app.setRefundProcessed(true);
+//                app.setRefundAmount(request.getAmount());
+//            }
+//        }
+//
+//        if (app.isAdvancePaid() && app.isFirstMonthRentPaid()){
+//            app.setHasCheckedIn(true);
+//        }
+//        tenantApplicationRepository.save(app);
+//        return PaymentConverter.toResponse(savedPayment);
+//    }
     @Transactional
     public PaymentResponse makePayment(PaymentRequest request) {
-
         TenantApplication app = tenantApplicationRepository.findById(request.getTenantApplicationId())
                 .orElseThrow(() -> new RuntimeException("Tenant application not found"));
 
         PaymentType type = request.getType();
+        Payment savedPayment = null;
 
+        if (type == PaymentType.RENT) {
+            // fetch pending RENT payment and update it
+            System.out.println(app.getId()+" "+PaymentType.RENT+" "+PaymentStatus.PENDING);
+            Payment pending = paymentRepository
+                    .findTopByTenantApplicationIdAndTypeAndStatusOrderByTimestampDesc(
+                            app.getId(), PaymentType.RENT, PaymentStatus.PENDING)
+                    .orElseThrow(() -> new RuntimeException("No pending rent payment found"));
 
-        Payment payment = Payment.builder()
-                .tenantApplication(app)
-                .tenant(app.getTenant())
-                .type(type)
-                .amount(request.getAmount())
-                .status(PaymentStatus.SUCCESS)  // for dummy payment, mark success
-                .timestamp(LocalDateTime.now())
-                .transactionRef("TXN-" + UUID.randomUUID())
-                .build();
+            pending.setStatus(PaymentStatus.SUCCESS);
+            pending.setTimestamp(LocalDateTime.now());
+            pending.setTransactionRef("TXN-" + UUID.randomUUID());
+            pending.setAmount(request.getAmount());
 
-        Payment savedPayment = paymentRepository.save(payment);
+            savedPayment = paymentRepository.save(pending);
+        } else {
+            // create new payment for TOKEN, ADVANCE, FIRST_MONTH_RENT, REFUND
+            Payment payment = Payment.builder()
+                    .tenantApplication(app)
+                    .tenant(app.getTenant())
+                    .type(type)
+                    .amount(request.getAmount())
+                    .status(PaymentStatus.SUCCESS)
+                    .timestamp(LocalDateTime.now())
+                    .transactionRef("TXN-" + UUID.randomUUID())
+                    .build();
 
-        // Update TenantApplication based on payment type
+            savedPayment = paymentRepository.save(payment);
+        }
+
         switch (type) {
             case TOKEN -> {
                 app.setTokenPaid(true);
-                System.out.println(app.getTokenAmount()+" "+app.isTokenPaid());
                 app.setTokenAmount(request.getAmount());
             }
-            case ADVANCE -> {
-                app.setAdvancePaid(true);
-                app.setHasCheckedIn(true);
-            }
-            case RENT -> {
-                app.setFirstMonthRentPaid(true);
-                // you can store monthly rent payment logic if needed
-                // for example, add to a list of rentPayments or mark lastPaidMonth
-            }
+            case ADVANCE -> app.setAdvancePaid(true);
+            case FIRST_MONTH_RENT -> app.setFirstMonthRentPaid(true);
+            case RENT -> { System.out.println("done");}
+
             case REFUND -> {
                 app.setRefundProcessed(true);
                 app.setRefundAmount(request.getAmount());
             }
         }
 
+        if (app.isAdvancePaid() && app.isFirstMonthRentPaid()){
+            app.setHasCheckedIn(true);
+        }
         tenantApplicationRepository.save(app);
-
         return PaymentConverter.toResponse(savedPayment);
     }
 
+
+    // ✅ Initiate payment for check-in
     public PaymentInitResponse initiatePayment(Long tenantApplicationId) {
         TenantApplication app = tenantApplicationRepository.findById(tenantApplicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant Application not found"));
 
         PaymentInitResponse response = new PaymentInitResponse();
 
-        // Case 1️⃣: TOKEN
+        // TOKEN
         if (!app.isTokenPaid()) {
             response.setTenantApplicationId(app.getId());
-            response.setTokenAmount(1000.0);
-            response.setTotalAmount(1000.0);
+            response.setTokenAmount(TOKEN_AMOUNT);
+            response.setTotalAmount(TOKEN_AMOUNT);
             response.setType("TOKEN");
             return response;
         }
 
-        // Case 2️⃣: ADVANCE
-        else if (!app.isAdvancePaid()) {
+        // ADVANCE
+        if (!app.isAdvancePaid()) {
             double advance = app.getAdvanceAmount() != null ? app.getAdvanceAmount() : 0.0;
-            double rent = app.getFinalMonthlyRent() != null ? app.getFinalMonthlyRent() : 0.0;
-
-            double gstRate = 0.18;
-            double gst = (advance + rent) * gstRate;
-            double total = advance + rent + gst;
-
             response.setTenantApplicationId(app.getId());
             response.setAdvanceAmount(advance);
-            response.setFirstMonthRent(rent);
-            response.setGstAmount(gst);
-            response.setFinalAmountWithGST(total);
-            response.setTotalAmount(total);
+            response.setTotalAmount(advance);
             response.setType("ADVANCE");
             return response;
         }
 
-        // Case 3️⃣: RENT
-        else {
-            double rent = app.getFinalMonthlyRent() != null ? app.getFinalMonthlyRent() : 0.0;
-
-            double gstRate = 0.18;
-            double gst = rent * gstRate;
-            double total = rent + gst;
-
+        // FIRST_MONTH_RENT
+        if (!app.isFirstMonthRentPaid()) {
+            double rent = calculateFirstMonthRent(app);
             response.setTenantApplicationId(app.getId());
-            response.setRentAmount(rent);
-            response.setGstAmount(gst);
-            response.setFinalAmountWithGST(total);
-            response.setTotalAmount(total);
-            response.setType("RENT");
+            response.setFirstMonthRent(rent);
+            response.setTotalAmount(rent);
+            response.setType("FIRST_MONTH_RENT");
             return response;
         }
+
+        // NORMAL RENT
+        double rent = app.getFinalMonthlyRent();
+        double gst = rent * 0.18;
+        double total = rent + gst;
+        response.setTenantApplicationId(app.getId());
+        response.setRentAmount(rent);
+        response.setGstAmount(gst);
+        response.setFinalAmountWithGST(total);
+        response.setTotalAmount(total);
+        response.setType("RENT");
+        return response;
     }
 
+    // ✅ Create first month rent payment (pro-rated)
+    @Transactional
+    public void createFirstMonthRentPayment(TenantApplication app) {
+        if (app.isFirstMonthRentPaid()) return;
 
-    // Run every day at 9 AM
-    @Scheduled(cron = "0 0 9 * * *")
+        double firstMonthRent = calculateFirstMonthRent(app);
+
+        Payment firstMonthPayment = Payment.builder()
+                .tenantApplication(app)
+                .tenant(app.getTenant())
+                .type(PaymentType.FIRST_MONTH_RENT)
+                .amount(firstMonthRent)
+                .status(PaymentStatus.SUCCESS)
+                .timestamp(LocalDateTime.now())
+                .transactionRef("FIRSTMONTH-" + UUID.randomUUID())
+                .build();
+
+        paymentRepository.save(firstMonthPayment);
+        app.setFirstMonthRentPaid(true);
+        tenantApplicationRepository.save(app);
+    }
+
+    // ✅ Calculate pro-rated rent for first month
+    private double calculateFirstMonthRent(TenantApplication app) {
+        LocalDate checkIn = app.getCheckInDate() != null ? app.getCheckInDate() : LocalDate.now();
+        YearMonth month = YearMonth.from(checkIn);
+        int totalDays = month.lengthOfMonth();
+        int remainingDays = totalDays - checkIn.getDayOfMonth() + 1;
+        double dailyRent = app.getFinalMonthlyRent() / totalDays;
+        return dailyRent * remainingDays;
+    }
+
+    // ✅ Generate monthly rent 5 days before month start
+    @Scheduled(cron = "0 0 9 * * *") // runs every day at 9 AM
     @Transactional
     public void generateUpcomingRentPayments() {
-        LocalDate today = LocalDate.now();
+//        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.of(2025, 10, 27);
         LocalDate nextMonth = today.plusMonths(1).withDayOfMonth(1);
-        LocalDate generateDate = nextMonth.minusDays(5); // generate 5 days before new month
+        LocalDate generateDate = nextMonth.minusDays(5); // 5 days before next month
 
-        if (today.equals(generateDate)) {
-            System.out.println("📅 Generating rent payments for next month...");
+        if (!today.equals(generateDate)) return; // only run on the generateDate
 
-            tenantApplicationRepository.findAll().forEach(app -> {
-                if (app.isHasCheckedIn()) {
-                    boolean exists = paymentRepository.existsByTenantApplicationIdAndTypeAndRentForMonth(
-                            app.getId(), PaymentType.RENT, nextMonth);
+        tenantApplicationRepository.findAll().forEach(app -> {
+            if (app.isHasCheckedIn()) {
+                boolean exists = paymentRepository.existsByTenantApplicationIdAndTypeAndRentForMonth(
+                        app.getId(), PaymentType.RENT, nextMonth);
+                if (!exists) {
+                    double rent = app.getFinalMonthlyRent();
+                    double gst = rent * 0.18;
+                    double total = rent + gst;
 
-                    if (!exists) {
-                        double rent = app.getFinalMonthlyRent();
-                        double gstRate = 0.18;
-                        double gst = rent * gstRate;
-                        double total = rent + gst;
-
-                        Payment rentPayment = Payment.builder()
-                                .tenantApplication(app)
-                                .tenant(app.getTenant())
-                                .type(PaymentType.RENT)
-                                .amount(total)
-                                .status(PaymentStatus.PENDING)
-                                .rentForMonth(nextMonth)
-                                .timestamp(LocalDateTime.now())
-                                .transactionRef("AUTO-RENT-" + UUID.randomUUID())
-                                .build();
-
-                        paymentRepository.save(rentPayment);
-                        System.out.println("✅ Rent entry created for: " + app.getTenant().getName());
-                    }
+                    Payment rentPayment = Payment.builder()
+                            .tenantApplication(app)
+                            .tenant(app.getTenant())
+                            .type(PaymentType.RENT)
+                            .amount(total)
+                            .status(PaymentStatus.PENDING)
+                            .rentForMonth(nextMonth)
+                            .timestamp(LocalDateTime.now())
+                            .transactionRef("AUTO-RENT-" + UUID.randomUUID())
+                            .build();
+                    paymentRepository.save(rentPayment);
                 }
-            });
-        }
+            }
+        });
     }
 
-    @Transactional
-    public PaymentInitResponse initiateMonthlyRent(Long tenantApplicationId) {
-        TenantApplication app = tenantApplicationRepository.findById(tenantApplicationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tenant Application not found"));
 
-        if (!app.isHasCheckedIn()) {
-            throw new RuntimeException("Tenant has not checked in yet!");
-        }
+    //    @Transactional
+//    public PaymentInitResponse initiateMonthlyRent(Long tenantApplicationId) {
+//        TenantApplication app = tenantApplicationRepository.findById(tenantApplicationId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Tenant Application not found"));
+//
+//        if (!app.isHasCheckedIn()) {
+//            throw new RuntimeException("Tenant has not checked in yet!");
+//        }
+//
+//        // Determine current month (1st day of this month)
+//        LocalDate rentForMonth = LocalDate.now().withDayOfMonth(1);
+//
+//        boolean exists = paymentRepository.existsByTenantApplicationIdAndTypeAndRentForMonth(
+//                tenantApplicationId, PaymentType.RENT, rentForMonth);
+//
+//        Payment rentPayment;
+//        if (exists) {
+//            rentPayment = paymentRepository.findByTenantApplicationIdAndTypeAndRentForMonth(
+//                    tenantApplicationId, PaymentType.RENT, rentForMonth).get();
+//        } else {
+//            double rent = app.getFinalMonthlyRent();
+//            double gstRate = 0.18;
+//            double gst = rent * gstRate;
+//            double total = rent + gst;
+//
+//            rentPayment = Payment.builder()
+//                    .tenantApplication(app)
+//                    .tenant(app.getTenant())
+//                    .type(PaymentType.RENT)
+//                    .amount(total)
+//                    .status(PaymentStatus.PENDING)
+//                    .rentForMonth(rentForMonth)
+//                    .timestamp(LocalDateTime.now())
+//                    .transactionRef("RENT-" + UUID.randomUUID())
+//                    .build();
+//
+//            paymentRepository.save(rentPayment);
+//        }
+//
+//        PaymentInitResponse response = new PaymentInitResponse();
+//        response.setTenantApplicationId(app.getId());
+//        response.setRentAmount(app.getFinalMonthlyRent());
+//        response.setGstAmount(app.getFinalMonthlyRent() * 0.18);
+//        response.setFinalAmountWithGST(rentPayment.getAmount());
+//        response.setTotalAmount(rentPayment.getAmount());
+//        response.setType("RENT");
+//
+//        return response;
+//    }
+@Transactional
+public PaymentInitResponse initiateMonthlyRent(Long tenantApplicationId) {
+    // 1️⃣ Fetch tenant application
+    TenantApplication app = tenantApplicationRepository.findById(tenantApplicationId)
+            .orElseThrow(() -> new ResourceNotFoundException("Tenant Application not found"));
 
-        // Determine current month (1st day of this month)
-        LocalDate rentForMonth = LocalDate.now().withDayOfMonth(1);
+    if (!app.isHasCheckedIn()) {
+        throw new RuntimeException("Tenant has not checked in yet!");
+    }
 
-        boolean exists = paymentRepository.existsByTenantApplicationIdAndTypeAndRentForMonth(
-                tenantApplicationId, PaymentType.RENT, rentForMonth);
+    // 2️⃣ Determine current month (first day)
+    LocalDate rentForMonth = LocalDate.now().withDayOfMonth(1);
 
-        Payment rentPayment;
+    // 3️⃣ Skip creating rent for first month if already paid
+    LocalDate checkInMonth = app.getCheckInDate().withDayOfMonth(1);
+    if (checkInMonth.equals(rentForMonth) && app.isFirstMonthRentPaid()) {
+        throw new RuntimeException("No pending rent for current month. First month already paid.");
+    }
 
-        if (exists) {
-            // Rent entry already exists for this month
-            rentPayment = paymentRepository.findByTenantApplicationIdAndTypeAndRentForMonth(
-                    tenantApplicationId, PaymentType.RENT, rentForMonth
-            ).get();
-        } else {
-            double rent = app.getFinalMonthlyRent();
-            double gstRate = 0.18;
-            double gst = rent * gstRate;
-            double total = rent + gst;
+    // 4️⃣ Check if pending rent already exists
+    Optional<Payment> rentPaymentOpt = paymentRepository.findByTenantApplicationIdAndTypeAndRentForMonth(
+            tenantApplicationId, PaymentType.RENT, rentForMonth);
 
-            rentPayment = Payment.builder()
-                    .tenantApplication(app)
-                    .tenant(app.getTenant())
-                    .type(PaymentType.RENT)
-                    .amount(total)
-                    .status(PaymentStatus.PENDING)
-                    .rentForMonth(rentForMonth)
-                    .timestamp(LocalDateTime.now())
-                    .transactionRef("RENT-" + UUID.randomUUID())
-                    .build();
+    Payment rentPayment;
+    if (rentPaymentOpt.isPresent()) {
+        rentPayment = rentPaymentOpt.get(); // use existing pending rent
+    } else {
+        // 5️⃣ Create new RENT row (only for months after first month)
+        double rent = app.getFinalMonthlyRent();
+        double gstRate = 0.18;
+        double gst = rent * gstRate;
+        double total = rent + gst;
 
-            paymentRepository.save(rentPayment);
-        }
+        rentPayment = Payment.builder()
+                .tenantApplication(app)
+                .tenant(app.getTenant())
+                .type(PaymentType.RENT)
+                .amount(total)
+                .status(PaymentStatus.PENDING)
+                .rentForMonth(rentForMonth)
+                .timestamp(LocalDateTime.now())
+                .transactionRef("RENT-" + UUID.randomUUID())
+                .build();
 
-        // Prepare response
-        PaymentInitResponse response = new PaymentInitResponse();
-        response.setTenantApplicationId(app.getId());
-        response.setRentAmount(app.getFinalMonthlyRent());
-        response.setGstAmount(app.getFinalMonthlyRent() * 0.18);
-        response.setFinalAmountWithGST(rentPayment.getAmount());
-        response.setTotalAmount(rentPayment.getAmount());
-        response.setType("RENT");
+        paymentRepository.save(rentPayment);
+    }
 
-        return response;
+    // 6️⃣ Build response for frontend
+    PaymentInitResponse response = new PaymentInitResponse();
+    response.setTenantApplicationId(app.getId());
+    response.setRentAmount(app.getFinalMonthlyRent());
+    response.setGstAmount(app.getFinalMonthlyRent() * 0.18);
+    response.setFinalAmountWithGST(rentPayment.getAmount());
+    response.setTotalAmount(rentPayment.getAmount());
+    response.setType("RENT");
+
+    return response;
+}
+
+
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getUpcomingRentPayments(Long tenantId) {
+        return paymentRepository.findByTenantIdAndType(tenantId, PaymentType.RENT).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+                .map(PaymentConverter::toResponse)
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentHistory(Long tenantId) {
+        return paymentRepository.findByTenantId(tenantId).stream()
+                .map(PaymentConverter::toResponse)
+                .toList();
     }
 
 }

@@ -31,18 +31,39 @@ public class Tenant {
 
     private String bedNumber;
 
+    // ✅ Optional KYC details
+    private String nameAsPerAadhaar;
+    private String gender;
+    private String permanentAddress;
+    private String state;
+    private String city;
+    private String aadhaarNumber;
+    private String aadhaarFilePath; // store uploaded Aadhaar file/image path
+
+    // ✅ Optional profile photo (can show on dashboard)
+    private String profilePhotoPath;
+
+    // ✅ Bank details (for refund)
+    private String accountHolderName;
+    private String bankName;
+    private String accountNumber;
+    private String ifscCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pg_id")
     @JsonIgnore
+    @ToString.Exclude
     private PG pg;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id")
     @JsonIgnore
+    @ToString.Exclude
     private Room room;
 
     @OneToOne(mappedBy = "tenant")
     @JsonBackReference
+    @ToString.Exclude
     private Bed bed;
 
 

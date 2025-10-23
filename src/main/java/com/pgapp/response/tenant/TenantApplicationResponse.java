@@ -41,5 +41,6 @@ public class TenantApplicationResponse {
     private boolean refundProcessed;
     private Double tokenAmount;
     private Double refundAmount;
+    private boolean hasCheckedIn;
 
 }

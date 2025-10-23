@@ -23,6 +23,27 @@ public class TenantConverter {
         response.setName(tenant.getName());
         response.setEmail(tenant.getEmail());
         response.setPhone(tenant.getPhone());
+        if (tenant.getPg() != null) {
+            response.setPgId(tenant.getPg().getId());
+        }
+
+        // ✅ Map KYC fields
+        response.setNameAsPerAadhaar(tenant.getNameAsPerAadhaar());
+        response.setGender(tenant.getGender());
+        response.setPermanentAddress(tenant.getPermanentAddress());
+        response.setState(tenant.getState());
+        response.setCity(tenant.getCity());
+        response.setAadhaarNumber(tenant.getAadhaarNumber());
+        response.setAadhaarFilePath(tenant.getAadhaarFilePath());
+        response.setProfilePhotoPath(tenant.getProfilePhotoPath());
+
+        // ✅ Map Bank details
+        response.setAccountHolderName(tenant.getAccountHolderName());
+        response.setBankName(tenant.getBankName());
+        response.setAccountNumber(tenant.getAccountNumber());
+        response.setIfscCode(tenant.getIfscCode());
+
         return response;
     }
+
 }

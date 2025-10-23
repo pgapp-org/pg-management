@@ -8,6 +8,7 @@ import java.util.List;
 public interface TenantApplicationRepository extends JpaRepository<TenantApplication, Long> {
     List<TenantApplication> findByPgId(Long pgId);
     List<TenantApplication> findByTenantId(Long tenantId);
+    List<TenantApplication> findByCheckoutConfirmedTrueAndRefundProcessedTrue();
 //
 //    List<TenantApplication> findByPgId(Long pgId);
 //    List<TenantApplication> findByTenantId(Long tenantId);

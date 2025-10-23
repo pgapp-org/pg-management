@@ -24,5 +24,6 @@ public class Owner {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @ToString.Exclude
     private List<PG> pgs = new ArrayList<>();
 }

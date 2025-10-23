@@ -117,6 +117,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -156,5 +157,35 @@ public class TenantApplicationController {
     public ResponseEntity<TenantApplicationResponse> checkIn(@PathVariable Long applicationId) {
         return ResponseEntity.ok(applicationService.checkIn(applicationId));
     }
+
+    @PutMapping("/{applicationId}/checkout-apply")
+    public ResponseEntity<TenantApplicationResponse> applyCheckout(
+            @PathVariable Long applicationId,
+            @RequestParam LocalDate checkoutDate) {
+        return ResponseEntity.ok(applicationService.applyCheckout(applicationId, checkoutDate));
+    }
+
+    @PutMapping("/{applicationId}/checkout-confirm")
+    public ResponseEntity<TenantApplicationResponse> confirmCheckout(
+            @PathVariable Long applicationId) {
+        // Tenant confirms checkout, no extra charges here
+        return ResponseEntity.ok(applicationService.confirmCheckout(applicationId));
+    }
+
+    @PutMapping("/{applicationId}/finalize-refund")
+    public String finalizeRefund(
+            @PathVariable Long applicationId,
+            @RequestParam double extraCharges) {
+
+        return applicationService.processRefund(applicationId, extraCharges);
+    }
+
+
+    @GetMapping("/cleanup")
+    public String manualRefundCleanup() {
+        applicationService.finalizeRefundCleanup();
+        return "Manual refund cleanup executed";
+    }
+
 
 }

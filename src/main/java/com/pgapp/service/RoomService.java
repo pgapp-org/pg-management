@@ -63,6 +63,7 @@ public Room addRoom(Long floorId, Room room) {
                 .bedNumber(i)
                 .occupied(false)
                 .room(savedRoom)
+                .tenant(null)
                 .build();
         beds.add(bed);
     }

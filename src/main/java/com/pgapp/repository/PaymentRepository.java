@@ -1,6 +1,7 @@
 package com.pgapp.repository;
 
 import com.pgapp.entity.Payment;
+import com.pgapp.enums.PaymentStatus;
 import com.pgapp.enums.PaymentType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,4 +19,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> findByTenantApplicationIdAndTypeAndRentForMonth(Long tenantApplicationId, PaymentType type, LocalDate rentForMonth);
 
     boolean existsByTenantApplicationIdAndTypeAndRentForMonth(Long id, PaymentType paymentType, LocalDate nextMonth);
+
+    List<Payment> findByTenantIdAndTypeAndStatus(Long tenantId, PaymentType type, PaymentStatus status);
+
+    Optional<Payment> findTopByTenantApplicationIdAndTypeAndStatusOrderByTimestampDesc(
+            Long tenantApplicationId,
+            PaymentType type,
+            PaymentStatus status
+    );
+
+
 }

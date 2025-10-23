@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "tenant_applications")
@@ -43,6 +44,10 @@ public class TenantApplication {
 
     // booking dates (set during apply)
     private LocalDate checkInDate;
+    private boolean checkoutRequested = false;  // tenant applied for checkout
+    private boolean checkoutConfirmed = false;  // checkout finalized by owner
+
+
     private LocalDate checkOutDate;
 
     // quick flags (optional - mostly tracked by Payment entity)
@@ -61,4 +66,9 @@ public class TenantApplication {
     private boolean hasCheckedIn = false;
     private boolean firstMonthRentPaid = false;
 
+    @Column(nullable = false)
+    private boolean noticeApplied = false;
+
+    @OneToMany(mappedBy = "tenantApplication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Payment> payments;
 }

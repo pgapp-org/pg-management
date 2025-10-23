@@ -2,13 +2,19 @@ package com.pgapp.controller;
 
 import com.pgapp.converter.tenant.TenantConverter;
 import com.pgapp.entity.Tenant;
+import com.pgapp.request.tenant.TenantKycRequest;
 import com.pgapp.request.tenant.TenantRequest;
 import com.pgapp.response.tenant.TenantResponse;
 import com.pgapp.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -44,11 +50,12 @@ public class TenantController {
 
     // ✅ Get tenant by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Tenant> getTenantById(@PathVariable Long id) {
+    public ResponseEntity<TenantResponse> getTenantById(@PathVariable Long id) {
         return tenantService.getTenantById(id)
-                .map(ResponseEntity::ok)
+                .map(tenant -> ResponseEntity.ok(TenantConverter.toResponse(tenant)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
 
     // ✅ Get all tenants
     @GetMapping
@@ -80,4 +87,63 @@ public class TenantController {
                 ResponseEntity.noContent().build() :
                 ResponseEntity.notFound().build();
     }
+//
+//    @PutMapping("/{tenantId}/kyc")
+//    public ResponseEntity<Tenant> updateKyc(
+//            @PathVariable Long tenantId,
+//            @RequestBody TenantKycRequest kycRequest) {
+//
+//        Tenant updatedTenant = tenantService.updateTenantKyc(tenantId, kycRequest);
+//        return ResponseEntity.ok(updatedTenant);
+//    }
+    @PutMapping("/{tenantId}/kyc")
+    public ResponseEntity<Tenant> updateKyc(
+            @PathVariable Long tenantId,
+            @RequestBody TenantKycRequest kycRequest) {
+
+        System.out.println("🟩 Received KYC Request for Tenant ID: " + tenantId);
+        System.out.println("➡ Name As Per Aadhaar: " + kycRequest.getNameAsPerAadhaar());
+        System.out.println("➡ Gender: " + kycRequest.getGender());
+        System.out.println("➡ Address: " + kycRequest.getPermanentAddress());
+        System.out.println("➡ State: " + kycRequest.getState());
+        System.out.println("➡ City: " + kycRequest.getCity());
+        System.out.println("➡ Aadhaar Number: " + kycRequest.getAadhaarNumber());
+        System.out.println("➡ Aadhaar File Path: " + kycRequest.getAadhaarFilePath());
+        System.out.println("➡ Profile Photo Path: " + kycRequest.getProfilePhotoPath());
+        System.out.println("➡ Account Holder Name: " + kycRequest.getAccountHolderName());
+        System.out.println("➡ Bank Name: " + kycRequest.getBankName());
+        System.out.println("➡ Account Number: " + kycRequest.getAccountNumber());
+        System.out.println("➡ IFSC Code: " + kycRequest.getIfscCode());
+
+        Tenant updatedTenant = tenantService.updateTenantKyc(tenantId, kycRequest);
+        return ResponseEntity.ok(updatedTenant);
+    }
+
+
+
+//    @PostMapping(value = "/{tenantId}/upload-kyc", consumes = "multipart/form-data")
+//    public ResponseEntity<Map<String, String>> uploadKyc(
+//            @PathVariable Long tenantId,
+//            @RequestParam("aadhaarFile") MultipartFile aadhaarFile,
+//            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto) {
+//
+//        tenantService.saveKycFiles(tenantId, aadhaarFile, profilePhoto);
+//        return ResponseEntity.ok(Map.of("message", "KYC files uploaded successfully"));
+//    }
+
+    @PostMapping(value = "/{tenantId}/upload-kyc", consumes = "multipart/form-data")
+    public ResponseEntity<Map<String, String>> uploadKyc(
+            @PathVariable Long tenantId,
+            @RequestParam("aadhaarFile") MultipartFile aadhaarFile,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto) {
+
+        tenantService.saveKycFiles(tenantId, aadhaarFile, profilePhoto);
+        Tenant tenant = tenantService.getTenantById(tenantId).orElseThrow();
+        return ResponseEntity.ok(Map.of(
+                "aadhaarFilePath", tenant.getAadhaarFilePath(),
+                "profilePhotoPath", tenant.getProfilePhotoPath()
+        ));
+    }
+
+
 }

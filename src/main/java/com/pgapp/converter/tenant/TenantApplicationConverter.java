@@ -178,6 +178,7 @@ public class TenantApplicationConverter {
                 .refundProcessed(app.isRefundProcessed())
                 .tokenAmount(app.getTokenAmount())
                 .refundAmount(app.getRefundAmount())
+                .hasCheckedIn(app.isHasCheckedIn())
                 .build();
     }
 
