@@ -229,6 +229,7 @@ package com.pgapp.service;
 import com.pgapp.converter.tenant.TenantApplicationConverter;
 import com.pgapp.entity.*;
 import com.pgapp.enums.ApplicationStatus;
+import com.pgapp.enums.PaymentStatus;
 import com.pgapp.enums.PaymentType;
 import com.pgapp.repository.*;
 import com.pgapp.request.PaymentRequest;
@@ -506,6 +507,8 @@ public class TenantApplicationService {
         payment.setTenant(app.getTenant());
         payment.setAmount(finalRefund);
         payment.setType(PaymentType.REFUND);
+        payment.setRentForMonth(LocalDate.now());
+        payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
 
         applicationRepository.save(app);

@@ -1,9 +1,11 @@
 package com.pgapp.service;
 
+import com.pgapp.converter.tenant.TenantConverter;
 import com.pgapp.entity.Tenant;
 import com.pgapp.exception.ResourceNotFoundException;
 import com.pgapp.repository.TenantRepository;
 import com.pgapp.request.tenant.TenantKycRequest;
+import com.pgapp.response.tenant.TenantResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,9 +36,14 @@ public class TenantService {
     }
 
     // ✅ Get all tenants
-    public List<Tenant> getAllTenants() {
-        return tenantRepository.findAll();
+
+    public List<TenantResponse> getTenantsByPg(Long pgId) {
+        return tenantRepository.findByPgId(pgId).stream()
+                .map(TenantConverter::toResponse) // convert each Tenant → TenantResponse
+                .toList();
     }
+
+
 
     // ✅ Update tenant details
     public Optional<Tenant> updateTenant(Long id, Tenant updatedTenant) {

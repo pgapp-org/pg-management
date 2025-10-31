@@ -6,6 +6,7 @@ import com.pgapp.exception.ResourceNotFoundException;
 import com.pgapp.repository.RoomRepository;
 import com.pgapp.request.owner.RoomRequest;
 import com.pgapp.response.PGRoomResponse;
+import com.pgapp.response.RoomDetailsResponse;
 import com.pgapp.response.RoomResponse;
 import com.pgapp.service.RoomService;
 import org.springframework.http.ResponseEntity;
@@ -85,6 +86,12 @@ public class RoomController {
     @GetMapping("/{pgId}/rooms")
     public ResponseEntity<List<PGRoomResponse>> getRoomsByPG(@PathVariable Long pgId) {
         List<PGRoomResponse> rooms = roomService.getRoomsByPG(pgId);
+        return ResponseEntity.ok(rooms);
+    }
+
+    @GetMapping("/tenant/rooms/{roomId}")
+    public ResponseEntity<RoomDetailsResponse> getRoomDetails(@PathVariable Long roomId) {
+        RoomDetailsResponse rooms = roomService.getRoomDetails(roomId);
         return ResponseEntity.ok(rooms);
     }
 

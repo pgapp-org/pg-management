@@ -63,6 +63,11 @@ public class PGService {
         return pgRepo.findById(id);
     }
 
+    public List<PG> getPGsByOwnerId(Long ownerId) {
+        return pgRepo.findByOwnerId(ownerId);
+    }
+
+
     // ✅ Get all PGs
     public List<PG> getAllPGs() {
         return pgRepo.findAll();

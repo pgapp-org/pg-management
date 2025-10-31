@@ -60,6 +60,11 @@ public class RoomConverter {
                     .collect(Collectors.toList()));
             res.setBedIds(room.getBeds().stream().map(b -> b.getId()).collect(Collectors.toList()));
         }
+        if (room.getPg() != null) {
+            res.setPgId(room.getPg().getId());
+            res.setPgName(room.getPg().getName());
+        }
+
         return res;
     }
 

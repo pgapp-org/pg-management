@@ -20,6 +20,11 @@ public class RoomResponse {
     private List<Long> bedIds;
     private FoodPolicy foodPolicy;
 
+    // ✅ Add these
+    private Long pgId;
+    private String pgName;
+
+
     // 🔹 Add nested beds
     private List<BedResponse> beds;
 }

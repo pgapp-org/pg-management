@@ -17,7 +17,7 @@ public class PaymentConverter {
         response.setPaymentDate(payment.getTimestamp() != null ? payment.getTimestamp().toLocalDate() : null);
         response.setTransactionId(payment.getTransactionRef());
         response.setSuccess(payment.getStatus() != null && payment.getStatus().name().equals("SUCCESS"));
-
+        response.setStatus(payment.getStatus());
         return response;
     }
 }

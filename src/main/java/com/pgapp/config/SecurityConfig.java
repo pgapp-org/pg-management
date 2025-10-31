@@ -78,6 +78,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").permitAll()
                         .requestMatchers("/api/complaints/**").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
+                        .requestMatchers("/api/owner/finance/**").permitAll()
 
 
                         .requestMatchers("/images/**", "/css/**", "/js/**").permitAll()

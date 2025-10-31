@@ -166,5 +166,11 @@ public class DailyBookingController {
         return ResponseEntity.ok(guestDTOs);
     }
 
+    @GetMapping("/pg/{pgId}/pending")
+    public ResponseEntity<List<DailyBookingResponseDTO>> getPendingBookingsByPg(@PathVariable Long pgId) {
+        return ResponseEntity.ok(bookingService.getPendingBookingsByPg(pgId));
+    }
+
+
 
 }

@@ -12,4 +12,6 @@ public interface DailyBookingRepository extends JpaRepository<DailyBookings, Lon
 
 
     List<DailyBookings> findByRoomIdAndStatusIn(Long roomId, List<ApplicationStatus> statuses);
+
+    List<DailyBookings> findByPgIdAndStatus(Long pgId, ApplicationStatus status);
 }

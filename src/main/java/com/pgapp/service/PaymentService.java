@@ -225,8 +225,9 @@ public class PaymentService {
             Payment payment = Payment.builder()
                     .tenantApplication(app)
                     .tenant(app.getTenant())
-                    .type(type)
+                    .type(type == PaymentType.FIRST_MONTH_RENT ? PaymentType.RENT : type)
                     .amount(request.getAmount())
+                    .rentForMonth(LocalDate.now())
                     .status(PaymentStatus.SUCCESS)
                     .timestamp(LocalDateTime.now())
                     .transactionRef("TXN-" + UUID.randomUUID())
@@ -319,7 +320,7 @@ public class PaymentService {
                 .tenant(app.getTenant())
                 .type(PaymentType.FIRST_MONTH_RENT)
                 .amount(firstMonthRent)
-                .status(PaymentStatus.SUCCESS)
+                .status(PaymentStatus.PENDING)
                 .timestamp(LocalDateTime.now())
                 .transactionRef("FIRSTMONTH-" + UUID.randomUUID())
                 .build();
@@ -500,5 +501,13 @@ public PaymentInitResponse initiateMonthlyRent(Long tenantApplicationId) {
                 .map(PaymentConverter::toResponse)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public Optional<PaymentResponse> getMonthlyRentPayment(Long tenantId, LocalDate month) {
+        return paymentRepository
+                .findMonthlyRentPayment(tenantId, PaymentType.RENT, month)
+                .map(PaymentConverter::toResponse);
+    }
+
 
 }

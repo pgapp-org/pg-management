@@ -1,21 +1,22 @@
 package com.pgapp.service;
 
 import com.pgapp.converter.RoomConverter;
-import com.pgapp.entity.Bed;
-import com.pgapp.entity.Floor;
-import com.pgapp.entity.PG;
-import com.pgapp.entity.Room;
+import com.pgapp.entity.*;
+import com.pgapp.enums.PaymentStatus;
 import com.pgapp.exception.ResourceNotFoundException;
 import com.pgapp.repository.FloorRepository;
 import com.pgapp.repository.PGRepository;
 import com.pgapp.repository.RoomRepository;
+import com.pgapp.repository.TenantApplicationRepository;
 import com.pgapp.response.PGRoomResponse;
+import com.pgapp.response.RoomDetailsResponse;
 import com.pgapp.response.RoomResponse;
 //import jakarta.transaction.Transactional;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,17 +24,24 @@ import java.util.Optional;
 @Service
 public class RoomService {
 
-    private final RoomRepository roomRepository;
-    private final FloorRepository floorRepository;
-    private final PGRepository pgRepo;
+        private final RoomRepository roomRepository;
+        private final FloorRepository floorRepository;
+        private final PGRepository pgRepo;
+        private final TenantApplicationRepository tenantApplicationRepository;
+        private final PaymentService paymentService;
 
-    public RoomService(RoomRepository roomRepository, FloorRepository floorRepository, PGRepository pgRepo) {
-        this.roomRepository = roomRepository;
-        this.floorRepository = floorRepository;
-        this.pgRepo = pgRepo;
-    }
+        public RoomService(RoomRepository roomRepository, FloorRepository floorRepository,
+                           PGRepository pgRepo, TenantApplicationRepository tenantApplicationRepository,
+                           PaymentService paymentService) {
+            this.roomRepository = roomRepository;
+            this.floorRepository = floorRepository;
+            this.pgRepo = pgRepo;
+            this.tenantApplicationRepository = tenantApplicationRepository;
+            this.paymentService = paymentService;
+        }
 
-//    // ➕ Add Room under a Floor
+
+        //    // ➕ Add Room under a Floor
 //    public Room addRoom(Long floorId, Room room) {
 //        Floor floor = floorRepository.findById(floorId)
 //                .orElseThrow(() -> new RuntimeException("Floor not found with id " + floorId));
@@ -45,6 +53,7 @@ public Room addRoom(Long floorId, Room room) {
     Floor floor = floorRepository.findById(floorId)
             .orElseThrow(() -> new ResourceNotFoundException("Floor not found with id " + floorId));
 
+    room.setPg(floor.getPg());
     room.setFloor(floor);
     room.setFoodPolicy(floor.getPg().getFoodPolicy());
     System.out.println(floor.getPg().getFoodPolicy());
@@ -172,5 +181,64 @@ public Room addRoom(Long floorId, Room room) {
                 .toList();
     }
 
+
+    @Transactional(readOnly = true)
+    public RoomDetailsResponse getRoomDetails(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Room not found with id " + roomId));
+
+        RoomDetailsResponse response = new RoomDetailsResponse();
+        response.setRoomId(room.getId());
+        response.setRoomNumber(room.getRoomNumber());
+        response.setCapacity(room.getCapacity());
+
+        LocalDate currentMonth = LocalDate.now().withDayOfMonth(1);
+
+        List<RoomDetailsResponse.BedDetails> bedDetailsList = room.getBeds().stream().map(bed -> {
+            RoomDetailsResponse.BedDetails bedDetails = new RoomDetailsResponse.BedDetails();
+            bedDetails.setBedId(bed.getId());
+            bedDetails.setBedNumber(bed.getBedNumber());
+            bedDetails.setOccupied(bed.isOccupied());
+
+            if (bed.isOccupied() && bed.getTenant() != null) {
+                Tenant tenant = bed.getTenant();
+                bedDetails.setTenantId(tenant.getId());
+                bedDetails.setTenantName(tenant.getName());
+                bedDetails.setPhoneNumber(tenant.getPhone());
+
+                // 🔍 Fetch tenant application manually (since Tenant doesn’t have direct link)
+                TenantApplication tenantApp = tenantApplicationRepository
+                        .findByTenantIdAndCheckoutConfirmedFalse(tenant.getId())
+                        .orElse(null);
+
+                if (tenantApp != null) {
+                    bedDetails.setTenantApplicationId(tenantApp.getId());
+                    bedDetails.setCheckInDate(tenantApp.getCheckInDate());
+                    bedDetails.setAppliedForCheckOut(tenantApp.isCheckoutRequested());
+
+                    System.out.println("executed .......................");
+                    // 💰 Fetch current month rent payment
+                    var paymentOpt = paymentService.getMonthlyRentPayment(tenant.getId(), currentMonth);
+                    if (paymentOpt.isPresent()) {
+                        var payment = paymentOpt.get();
+                        bedDetails.setRentStatus(payment.getStatus());
+                        bedDetails.setRentAmount(payment.getAmount());
+                        System.out.println(bedDetails.getRentAmount()+"======="+payment.getAmount());
+                        System.out.println(bedDetails.getRentStatus()+" === "+payment.getStatus());
+                    } else {
+                        bedDetails.setRentStatus(PaymentStatus.PENDING);
+                        System.out.println("executed .......................Pending");
+                    }
+
+                    System.out.println("executed .......................");
+
+                }
+            }
+            return bedDetails;
+        }).toList();
+
+        response.setBeds(bedDetailsList);
+        return response;
+    }
 
 }

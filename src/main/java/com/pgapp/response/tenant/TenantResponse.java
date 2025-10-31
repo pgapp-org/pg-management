@@ -29,6 +29,9 @@ public class TenantResponse {
     private String accountNumber;
     private String ifscCode;
 
+    private String roomNumber;
+    private Integer bedNumber;
+
 }
 
 

@@ -224,4 +224,13 @@ public class DailyBookingService {
     }
 
 
+    public List<DailyBookingResponseDTO> getPendingBookingsByPg(Long pgId) {
+        return bookingRepo.findByPgIdAndStatus(pgId, ApplicationStatus.PENDING)
+                .stream()
+                .map(DailyBookingConverter::toDTO)
+                .toList();
+    }
+
+
+
 }

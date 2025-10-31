@@ -134,5 +134,18 @@ public class PGController {
         return response;
     }
 
+    @GetMapping("/owner/{ownerId}")
+    public ResponseEntity<List<PGResponse>> getPGsByOwner(@PathVariable Long ownerId) {
+        List<PG> pgs = pgService.getPGsByOwnerId(ownerId);
+        if (pgs.isEmpty()) {
+            throw new ResourceNotFoundException("No PGs found for owner with id " + ownerId);
+        }
+        List<PGResponse> responses = pgs.stream()
+                .map(PGConverter::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+
 }
 

@@ -26,7 +26,15 @@ public class TenantConverter {
         if (tenant.getPg() != null) {
             response.setPgId(tenant.getPg().getId());
         }
+        if (tenant.getRoom() != null) {
+            response.setRoomNumber(tenant.getRoom().getRoomNumber());
+        }
 
+
+        if (tenant.getBed() != null) {
+            // ✅ Assuming Bed has an Integer field bedNumber
+            response.setBedNumber(tenant.getBed().getBedNumber());
+        }
         // ✅ Map KYC fields
         response.setNameAsPerAadhaar(tenant.getNameAsPerAadhaar());
         response.setGender(tenant.getGender());

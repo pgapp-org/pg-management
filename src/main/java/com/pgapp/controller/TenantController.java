@@ -58,10 +58,13 @@ public class TenantController {
 
 
     // ✅ Get all tenants
-    @GetMapping
-    public ResponseEntity<List<Tenant>> getAllTenants() {
-        return ResponseEntity.ok(tenantService.getAllTenants());
+    // Get tenants by PG
+    @GetMapping("/pg/{pgId}")
+    public ResponseEntity<List<TenantResponse>> getTenantsByPg(@PathVariable Long pgId) {
+        List<TenantResponse> tenants = tenantService.getTenantsByPg(pgId);
+        return ResponseEntity.ok(tenants);
     }
+
 
     // ✅ Update tenant
 //    @PutMapping("/{id}")

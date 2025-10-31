@@ -1,5 +1,6 @@
 package com.pgapp.response;
 
+import com.pgapp.enums.PaymentStatus;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -11,4 +12,5 @@ public class PaymentResponse {
     private LocalDate paymentDate;
     private String transactionId;
     private boolean success;
+    private PaymentStatus status;
 }

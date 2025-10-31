@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "tenants")
@@ -66,5 +67,7 @@ public class Tenant {
     @ToString.Exclude
     private Bed bed;
 
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL)
+    private List<TenantApplication> tenantApplications;
 
 }

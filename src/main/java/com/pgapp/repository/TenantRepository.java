@@ -9,4 +9,5 @@ public interface TenantRepository extends JpaRepository<Tenant, Long> {
     List<Tenant> findByPgId(Long pgId);
     Optional<Tenant> findByEmail(String email);
 
+
 }
